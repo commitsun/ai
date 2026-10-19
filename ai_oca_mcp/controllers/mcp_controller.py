@@ -43,6 +43,14 @@ class McpController(http.Controller):
         server = request.env["mcp.server.key"].sudo().browse(server_id)
         server = server.with_user(server.user_id.id)
         method = payload.get("method")
+        if "id" not in payload or not method:
+            # Notifications (such as notifications/initialized) and responses
+            # get no body: 202 Accepted, as the Streamable HTTP transport says.
+            return request.make_response("", status=202)
+        if method == "ping":
+            return request.make_json_response(
+                {"jsonrpc": "2.0", "id": payload.get("id"), "result": {}}
+            )
         if method == "initialize":
             return request.make_json_response(
                 {
